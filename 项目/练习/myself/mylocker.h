@@ -69,7 +69,10 @@ private:
     pthread_mutex_t m_mutex;
     pthread_cond_t m_cond;
 public:
-    mycond()
+    mycond()    //创建并初始化条件变量
+    {
+
+    }
 };
 
 
