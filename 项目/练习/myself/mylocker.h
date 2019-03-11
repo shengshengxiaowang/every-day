@@ -1,8 +1,8 @@
 #ifndef LOCKER_H
 #define LOCKER_H
 
-#include<list>
-#include<cstdio>
+//#include<list>
+//#include<cstdio>
 #include<iostream>
 #include<exception>
 #include<pthread.h>
@@ -63,6 +63,7 @@ public:
     }
 };
 
+
 class mycond   //封装条件变量的类
 {
 private:
@@ -71,9 +72,32 @@ private:
 public:
     mycond()    //创建并初始化条件变量
     {
-
+        if(pthread_mutex_init(&m_mutex,NULL)!=0)//创建初始化互斥锁
+        {
+            throw std::exception();
+        }
+        if(pthread_cond_init(&m_cond,NULL)!=0)
+        {
+            throw std::exception();
+        }
+    }
+    ~mycond()     //销毁条件变量
+    {
+        pthread_mutex_destroy(&m_mutex);
+        pthread_cond_destroy(&m_cond);
+    }
+    bool wait()   //等待条件变量
+    {
+        int ret;
+        pthread_mutex_lock(&m_mutex );    ///上锁
+        ret=pthread_cond_wait(&m_cond,&m_mutex);   //等待目标条件变量
+        pthread_mutex_unlock(&m_mutex);    //解锁
+        return ret==0;
+    }
+    bool signal()  //唤醒等待条件变量的线程
+    {
+        return pthread_cond_signal(&m_cond)==0;
     }
 };
-
 
 #endif
