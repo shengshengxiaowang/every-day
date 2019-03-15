@@ -252,3 +252,97 @@ myhttp_conn::HTTP_CODE myhttp_conn::parse_headers(char* text)
     return NO_REQUEST;
 
 }
+
+myhttp_conn::HTTP_CODE myhttp_conn::parse_content(char* text)
+{
+    if(my_readidx>=(my_contentlength+my_checkedidx))//如果消息长度加字符位置大于总长度
+    {
+        text[my_contentlength]='\0';
+        return GET_REQUEST;
+    }
+
+    return NO_REQUEST;
+}
+
+myhttp_conn::HTTP_CODE myhttp_conn::process_read()//解析HTTP请求
+{
+    LINE_STATUS line_status=LINE_OK;
+    HTTP_CODE ret=NO_REQUEST;
+    char* text=0;
+
+    while(((my_checkstate==CHECK_STATE_CONTENT)&&(line_status==LINE_OK))
+                ||((line_status=parse_line())==LINE_OK))
+    {
+        text=get_line();
+        my_startline=my_checkedidx;
+        printf("got 1 http line:%s\n",text);
+
+        switch(my_checkstate)
+        {
+            case CHECK_STATE_REQUESTLINE:
+            {
+                ret=parse_request_line(text);
+                if(ret==BAD_REQUEST)
+                {
+                    return BAD_REQUEST;
+                }
+                break;
+            }
+            case CHECK_STATE_HEADER:
+            {
+                ret=parse_headers(text);
+                if(ret==BAD_REQUEST)
+                {
+                    return BAD_REQUEST;
+                }
+                else if(ret==GET_REQUEST)
+                {
+                    return do_request();
+                }
+                break;
+            }
+            case CHECK_STATE_CONTENT:
+            {
+                ret=parse_content(text);
+                if(ret==GET_REQUEST)
+                {
+                    return do_request();
+                }
+                line_status=LINE_OPEN;
+                break;
+            }
+            default:
+            {
+                return INTERNAL_ERROR;
+            }
+        }
+    }
+
+    return NO_REQUEST;
+}
+
+myhttp_conn::HTTP_CODE myhttp_conn::do_request()
+{
+    strcpy(my_realfile,doc_root);
+    int len=strlen(doc_root);
+    strncpy(my_realfile+len,my_url,FILENAME_LEN-len-1);
+    if(stat(my_realfile,&my_filestat)<0)
+    {
+        return NO_RESOURCE;
+    }
+
+    if(!(my_filestat.st_mode & S_IROTH))
+    {
+        return FORBIDDEN_REQUEST;
+    }
+
+    if(S_ISDIR(my_filestat.st_mode))
+    {
+        return BAD_REQUEST;
+    }
+
+    int fd=open(my_realfile,O_RDONLY);
+    my_fileaddress=(char*)mmap(0,my_filestat.st_size,PROT_READ,MAP_PRIVATE,fd,0);
+    close(fd);
+    return FILE_REQUEST;
+}
