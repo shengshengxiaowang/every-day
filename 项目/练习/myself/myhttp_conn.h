@@ -58,8 +58,8 @@ public:
     bool write(); //写操作
 private:
     void init();
-    HTTP_CODE process_read(); //解析HTTP请求
-    bool process_write(HTTP_CODE ret); //填充应答
+     HTTP_CODE process_read(); //解析HTTP请求
+ bool process_write(HTTP_CODE ret); //填充应答
 
 //被process_read调用解析HTTP请求
     HTTP_CODE parse_request_line(char* text);
@@ -112,8 +112,8 @@ private:
     struct stat my_filestat; //目标文件状态，是否存在，目录或者文件等
 
     struct iovec my_iv[2];
-    int my_ivcont;  //被写内存块的数量
-    
+    int my_ivcount;  //被写内存块的数量
+
 
 };
 

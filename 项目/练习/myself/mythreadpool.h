@@ -6,7 +6,10 @@
 #include<pthread.h>
 #include<list>
 #include"mylocker.h"
+#include"myhttp_conn.h"
+
 using std::exception;
+
 template<typename T>
 class mythreadpool
 {
@@ -49,12 +52,12 @@ mythreadpool<T>::mythreadpool(int threadnumber,int requestmax):
         for(i=0;i<threadnumber;i++)
         {
             printf("正在创建第%d个线程\n",i);
-            if( pthread_creat(my_pthread+i,NULL,worker,this)!=0)//创建线程
+            if(pthread_create(my_pthread+i,NULL,worker,this)!=0)//创建线程
             {
                 delete [] my_pthread;
                 throw exception();
             }
-            if( pthread_detach(my_pthread[i]))  //设置脱离线程
+            if(pthread_detach(my_pthread[i]))  //设置脱离线程
             {
                 delete [] my_pthread;
                 throw exception();
@@ -104,14 +107,14 @@ void mythreadpool<T>::run()
             my_queuelocker.unlock();  //解锁
             continue;
         }
-        T* request=my_workqueue.front(); //如果等待队列不为空，执行第一个等待线程
+        T* re=my_workqueue.front(); //如果等待队列不为空，执行第一个等待线程
         my_workqueue.pop_front();//删除第一个等待线程
         my_queuelocker.unlock(); //解锁
-        if(!request)//如果没有执行,继续
+        if(re!=NULL)//如果没有执行,继续
         {
             continue;
         }
-        request->process;
+        re -> process();
 
     }
 }

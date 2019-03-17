@@ -346,3 +346,205 @@ myhttp_conn::HTTP_CODE myhttp_conn::do_request()
     close(fd);
     return FILE_REQUEST;
 }
+
+void myhttp_conn::unmap()
+{
+    if(my_fileaddress)
+    {
+        munmap(my_fileaddress,my_filestat.st_size);
+        my_fileaddress=0;
+    }
+}
+
+bool myhttp_conn::write()
+{
+    int temp=0;
+    int bytes_have_send=0;
+    int bytes_to_send=my_writeidx;
+    if(bytes_to_send==0)
+    {
+        modfd(my_epollfd,my_sockfd,EPOLLIN);
+        init();
+        return true;
+    }
+
+    while( 1 )
+    {
+        temp=writev(my_sockfd,my_iv,my_ivcount);
+        if(temp<=-1)
+        {
+            if(errno==EAGAIN)
+            {
+                modfd(my_epollfd,my_sockfd,EPOLLOUT);
+                return true;
+            }
+            unmap();
+            return false;
+        }
+
+        bytes_to_send-=temp;
+        bytes_have_send+=temp;
+        if(bytes_to_send<=bytes_have_send)
+        {
+            unmap();
+            if(my_linger)
+            {
+                init();
+                modfd(my_epollfd,my_sockfd,EPOLLIN);
+                return true;
+            }
+            else
+            {
+                modfd(my_epollfd,my_sockfd,EPOLLIN);
+                return false;
+            }
+        }
+    }
+}
+
+bool myhttp_conn::add_response(const char* format,...)
+{
+    if(my_writeidx>=WRITE_BUFFER_SIZE)
+    {
+        return false;
+    }
+    va_list arg_list;
+    va_start(arg_list,format);
+    int len=vsnprintf(my_writebuf+my_writeidx,WRITE_BUFFER_SIZE-1-my_writeidx,format,arg_list);
+    if(len>=(WRITE_BUFFER_SIZE-1-my_writeidx))
+    {
+        return false;
+    }
+    my_writeidx+=len;
+    va_end(arg_list);
+    return true;
+}
+
+bool myhttp_conn::add_status_line(int status,const char* title)
+{
+    return add_response("%s %d %s\r\n","HTTP/1.1",status,title);
+}
+
+bool myhttp_conn::add_headers(int content_len)
+{
+    add_content_length(content_len);
+    add_linger();
+    add_blank_line();
+/* */    return  0;
+}
+
+bool myhttp_conn::add_content_length(int content_len)
+{
+    return add_response("Content-Length: %d\r\n",content_len);
+}
+
+bool myhttp_conn::add_linger()
+{
+    return add_response("Connection: %s\r\n",(my_linger==true)?"keep-alive":"close");
+}
+
+bool myhttp_conn::add_blank_line()
+{
+    return add_response("%s","\r\n");
+}
+
+bool myhttp_conn::add_content(const char* content)
+{
+    return add_response("%s",content);
+}
+
+bool myhttp_conn::process_write(HTTP_CODE ret)
+{
+    switch(ret)
+    {
+        case INTERNAL_ERROR:
+        {
+            add_status_line(500,error_500_title);
+            add_headers(strlen(error_500_form));
+            if(!add_content(error_500_form))
+            {
+                return false;
+            }
+            break;
+        }
+        case BAD_REQUEST:
+        {
+            add_status_line(400,error_400_title);
+            add_headers(strlen(error_400_form));
+            if(!add_content(error_400_form))
+            {
+                return false;
+            }
+            break;
+        }
+        case NO_RESOURCE:
+        {
+            add_status_line(404,error_404_title);
+            add_headers(strlen(error_404_form));
+            if(!add_content(error_404_form))
+            {
+                return false;
+            }
+            break;
+        }
+        case FORBIDDEN_REQUEST:
+        {
+            add_status_line(403,error_403_title);
+            add_headers(strlen(error_403_form));
+            if(!add_content(error_403_form))
+            {
+                return false;
+            }
+            break;
+        }
+        case FILE_REQUEST:
+        {
+            add_status_line(200,ok_200_title);
+            if(my_filestat.st_size!=0)
+            {
+                add_headers(my_filestat.st_size);
+                my_iv[0].iov_base=my_writebuf;
+                my_iv[0].iov_len=my_writeidx;
+                my_iv[1].iov_base=my_fileaddress;
+                my_iv[1].iov_len=my_filestat.st_size;
+                my_ivcount=2;
+                return true;
+            }
+            else
+            {
+                const char* ok_string="<html><body></body></html>";
+                add_headers(strlen(ok_string));
+                if(!add_content(ok_string))
+                {
+                    return false;
+                }
+            }
+        }
+        default:
+        {
+            return false;
+        }
+    }
+
+    my_iv[0].iov_base=my_writebuf;
+    my_iv[0].iov_len=my_writeidx;
+    my_ivcount=1;
+    return true;
+}
+
+void myhttp_conn::process()
+{
+    HTTP_CODE read_ret=process_read();
+    if(read_ret==NO_REQUEST)
+    {
+        modfd(my_epollfd,my_sockfd,EPOLLIN);
+        return;
+    }
+
+    bool write_ret=process_write(read_ret);
+    if(!write_ret)
+    {
+        close_conn();
+    }
+    modfd(my_epollfd,my_sockfd,EPOLLOUT);
+}
