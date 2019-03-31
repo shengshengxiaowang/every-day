@@ -21,16 +21,209 @@ public:
 private:
     char* data;  //字符串指针
 public:
+    myString& operator=(char str);  //赋字符串函数
     myString& operator+(const myString& str);  //串联字符串函数
     myString& operator+(char str);   //追加字符函数
     void swap(myString& str1,myString& str2);    //交换字符串函数
-    int length();   //计算字符串长度函数
-    //比较大小
-    //索取子串
+    size_t length();   //计算字符串长度函数
+    bool operator==(const myString& str);   //是否相等s1==s2
+    bool operator==(const char str);        //是否与字符串相等
+    bool operator!=(const myString& str);   //是否不相等s1!=s2
+    bool operator!=(const char str);        //是否与字符串不相等
+    bool operator<(const myString& str);   //s1<s2
+    bool operator<(const char str);       //s1<字符串
+    bool operator>(const myString& str);   //s1>s2
+    bool operator>(const char str);       //s1>字符串
+    //int compare(const myString& str1,const myString& str2);  //比较s1,s2大小
+    char* substr(const int a,int b);//索取子串
+    char& operator[](const int n);  //[]取出第n个字符
+    friend istream& operator>>(istream &is, myString &str);//输入
+	friend ostream& operator<<(ostream &os, myString &str);//输出
+
 };
 
 inline
-int myString::length()   //计算字符串长度函数
+char* myString::substr(const int a,int b) //索取子串
+{
+    int l=strlen(data);
+    if(a>=l || b<a)   //出错处理
+    {
+        return  data;
+    }
+    if(b>l) //出错处理
+    {
+        b=l;
+    }
+    int i=0,j;
+    char* s=new char[b-a+1];
+
+    for(j=a;j<=b;j++)
+    {
+        s[i++]=data[j];
+    }
+    s[i]='\0';
+    return s;
+}
+
+
+istream&
+operator>>(istream& is, myString& str)//输入
+{
+	char tem[1000];  //申请一块内存
+	is>>tem;
+	str.data = new char[strlen(tem)+1];
+	strcpy(str.data,tem);
+	return is;
+}
+
+ostream&
+operator<<(ostream& os,myString& str)//输出,为了实现cout<<a<<b的连续输出，需要返回输出流
+{
+    os << str.get_cstr();
+        return os;
+}
+
+inline
+char& myString::operator[](const int n)
+{
+    int a=strlen(data);
+    if(n>=a)
+    {
+        return data[a-1]; //错误处理
+    }
+	else
+    {
+        return data[n];
+    }
+}
+
+/*inline
+int myString::compare(const myString& str1,const myString& str2)
+{
+    if(strcmp(str1.data,str2.data)==0)  //如果相等，返回0
+    {
+        return 0;
+    }
+    else if(strcmp(str1.data,str2.data)>0)  //如果大于，返回1
+    {
+        return 1;
+    }
+    else            //如果小于，返回-1
+    {
+        return -1;
+    }
+
+}*/
+
+inline
+bool myString::operator>(const myString& str)  //s1>s2
+{
+    if(strcmp(data,str.data)>0)    //如果小于0
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+inline
+bool myString::operator>(const char str) //s1>字符串
+{
+    if(strcmp(data,&str)>0)    //如果大于0
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+
+inline
+bool myString::operator<(const myString& str)  //s1<s2
+{
+    if(strcmp(data,str.data)<0)    //如果小于0
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+inline
+bool myString::operator<(const char str)  //s1<字符串
+{
+    if(strcmp(data,&str)<0)    //如果小于0
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+inline
+bool myString::operator!=(const myString& str)//比较是否不相等s1!=s2
+{
+    if(strcmp(data,str.data))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+inline
+bool myString::operator!=(const char str)// 是否与字符串不相等
+{
+    if(strcmp(data,&str))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+inline
+bool myString::operator==(const myString& str)//比较是否相等s1==s2
+{
+    if(strcmp(data,str.data))    //如果相等，if(0),则假
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+inline
+bool myString::operator==(const char str)//比较是否相等s1==s2
+{
+    if(strcmp(data,&str))    //如果相等，if(0),则假
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+inline
+size_t myString::length()   //计算字符串长度函数
 {
     return strlen(data);
 }
@@ -101,6 +294,17 @@ myString::myString(const myString& str)   //拷贝构造函数
     strcpy(data,str.data);   //复制
 }
 
+
+inline
+myString& myString::operator=(char str)  //赋字符串函数
+{
+
+/*很有必要*/    delete[] data;  //删掉
+    data= new char[strlen(&str)+1];  //申请空间
+    strcpy(data,&str);  //复制
+    return *this;    //返回
+}
+
 inline
 myString& myString::operator=(const myString& str)  //拷贝赋值函数s2=s1
 {
@@ -120,13 +324,6 @@ myString::~myString()
     delete[] data;
 }
 
-
-inline
-ostream& operator<<(ostream& os, myString& str)
-{
-    os << str.get_cstr();
-    return os;
-}
 
 
 #endif
