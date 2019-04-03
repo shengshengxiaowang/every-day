@@ -52,9 +52,13 @@
 # include	<poll.h>		/* for convenience */
 #endif
 
+
 #ifdef	HAVE_SYS_EVENT_H
-# include	<sys/event.h>	/* for kqueue */
+# include	<sys/epoll.h>	
 #endif
+/*#ifdef	HAVE_SYS_EVENT_H
+# include	<sys/event.h>	for kqueue
+#endif*/
 
 #ifdef	HAVE_STRINGS_H
 # include	<strings.h>		/* for convenience */
@@ -66,20 +70,20 @@
 #ifdef	HAVE_SYS_IOCTL_H
 # include	<sys/ioctl.h>
 #endif
-#ifdef	HAVE_SYS_FILIO_H
+/*#ifdef	HAVE_SYS_FILIO_H
 # include	<sys/filio.h>
 #endif
 #ifdef	HAVE_SYS_SOCKIO_H
 # include	<sys/sockio.h>
-#endif
+#endif*/
 
 #ifdef	HAVE_PTHREAD_H
 # include	<pthread.h>
 #endif
 
-#ifdef HAVE_NET_IF_DL_H
+/*#ifdef HAVE_NET_IF_DL_H
 # include	<net/if_dl.h>
-#endif
+#endif*/
 
 #ifdef HAVE_NETINET_SCTP_H
 #include	<netinet/sctp.h>
