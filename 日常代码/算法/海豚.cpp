@@ -1,3 +1,4 @@
+//海豚算法，循环右移k，时间复杂的O(n),空间复杂度O(1)
 #include<iostream>
 using namespace std;
 int main()
