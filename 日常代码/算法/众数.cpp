@@ -1,11 +1,11 @@
-//众数问题：求出一组数，出现次数最多的数和次数值
-/*//递归求解
+//众数问题：求出一组数，出现次数最多的数和次数值(有序数) ,不适用于一组数据中有多个众数
 #include<iostream>
+#include <vector>
 using namespace std;
 int m=0,v=-1;
 
 int s;
-void sfun(int a,int b,int *c)
+void sfun(int a,int b,int *c)   //递归求解
 {
     int i,k=0,n;
     n=(b-a)/2;
@@ -33,18 +33,43 @@ void sfun(int a,int b,int *c)
 
 }
 
+void ssfun(int *num,int s)  //该方法只适合有序数组，若无序必须先进行排序；或者再增加数组用以记录每个数字出现次数，再进行比较
+{
+    int i,max=0,k=0,count=0,x;
+    //vector<int> num(c,c+s);
+    for(i=0;i<s;i++)
+    {
+        if(count==0)
+        {
+            x=num[i];
+            ++count;
+        }
+        else if(x!=num[i])
+        {
+            if(count>max)
+            {
+                k=num[i-1];
+                max=count;
+            }
+            count=0;
+        }
+        else
+        {
+            ++count;
+        }
+    }
+    cout << max <<k << endl;
+}
+
 int main()
 {
     cin>>s;
     int *a=new int(s);
-    for(int i=0;i<s;i++)ss
+    for(int i=0;i<s;i++)
     {
         cin >> a[i];
     }
-    sfun(0,s,a);
-
+    //sfun(0,s,a);
+    ssfun(a,s);
     cout<<m<<" " <<v<<endl;
-}*/
-
-//hash求解
-#include<iostream>
+}
