@@ -1,4 +1,6 @@
-
+//合并两个有序链表
+//用c语言方式建的链表，有问题！
+//递归简单
 #include<iostream>
 using namespace std;
 struct ListNode
@@ -25,7 +27,7 @@ public:
          return l1;
      }
 
-    ListNode * l=l1, *ll=l2,*head = nullptr,*q=nullptr;
+    ListNode * l=l1, *ll=l2,*head = nullptr;
      if( (l1->val)>(l2->val) )
      {
          l=l2;
@@ -52,14 +54,6 @@ public:
 
      }
 
- /*   q=head;
- while(q->next!=NULL)
- {
-     cout<<q->val;
-     q=q->next;
- }
-cout<<endl;*/
-
      if(ll!=NULL)
      {
          l->next=ll;
@@ -67,6 +61,36 @@ cout<<endl;*/
      return head;
     }
 };
+
+class solution2
+{
+public:
+    ListNode * merge(ListNode * l1,ListNode * l2)
+    {
+        ListNode *m=nullptr;
+        if(l1==NULL)
+        {
+            return l2;
+        }
+        else if(l2==NULL)
+        {
+            return l1;
+        }
+        if(l1->val<l2->val)
+        {
+            m=l1;
+            m->next=merge(l1->next ,l2);
+        }
+        else
+        {
+            m=l2;
+            m->next=merge(l2->next,l1);
+        }
+        return m;
+    }
+};
+
+
 int main()
 {
     ListNode *q;
