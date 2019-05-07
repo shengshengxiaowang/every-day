@@ -14,11 +14,12 @@ public:
         temp[0]=0;
         int i,j=1;
 
-        for(i=0;i<n;i++) //分段
+        for(i=0;i<n-1;i++) //分段
         {
             if(a[i]>a[i+1])
             {
                 temp[j++]=i+1;
+                //cout<<a[i+1]<<endl;
                 k++;//k是总共有多少段
             }
         }
