@@ -1,3 +1,5 @@
+#include "task.h"
+#include "threadpool.h"
 #include<iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,16 +12,9 @@
 #include <stdlib.h>
 #include <cassert>
 #include <sys/epoll.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-#include "mylocker.h"
-#include "mythreadpool.h"
-#include "myhttp_conn.h"
-
-#define MAX_FD 65536
-#define MAX_EVENT_NUMBER 10000
-
-extern int addfd(int epollfd,int fd,bool one_shot);//添加事件
-extern int removefd(int epollfd,int fd);//删除事件
 
 void addsig(int sig,void(handler)(int),bool restart=true)
 {
@@ -34,128 +29,175 @@ void addsig(int sig,void(handler)(int),bool restart=true)
     assert(sigaction(sig,&sa,NULL)!=-1);//断言
 }
 
-void show_error(int connfd,const char* info)
+
+
+/*int main(int argc, char *argv[])
 {
-    printf("%s",info);
-    send(connfd,info,strlen(info),0);
-    close( connfd );
-}
+	if(argc!=2)
+    {
+		cout<<"参数格式错误"<<endl;
+		return 1;
+	}
+	int listenfd=socket(PF_INET,SOCK_STREAM,0); //监听套接字
+	assert(listenfd>= 0);//断言
+    int sockfd, connfd;
+   	struct sockaddr_in servaddr, client;
+    int port=atoi(argv[1]);
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(port);
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd<0)
+    {
+		cout<<"main sockfd"<<endl;
+		return 1;
+    }
 
 
-int main(int argc,char* argv[])
+    int ret=bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+    assert(ret>=0);
+    ret = listen(sockfd, 10);//监听套接字
+    assert(ret>=0);
+	addsig(SIGPIPE, SIG_IGN); //忽视该信号
+	mythreadpool<task> pool(20);  //创建线程池
+	pool.start();  //运行
+
+	/*
+		int sockNumber[1000]={0};
+		struct epoll_event event;
+    struct epoll_event *wait_event;
+	int crRet=epoll_create(10);
+	if(-1==crRet)
+    {
+        perror("创建文件描述符失败");
+        return 0;
+    }
+    event.data.fd=sockfd;
+    event.events=EPOLLIN;
+    int clRet=epoll_ctl(crRet,EPOLL_CTL_ADD,sockfd,&event);
+    if(-1==clRet)
+    {
+        perror("注册监听事件类型失败");
+    }
+	int max1=0;
+    char buf[1024]={0};
+
+
+	while(1)
+    {
+		wait_event=new epoll_event[max1+1];
+        clRet=epoll_wait(crRet,wait_event,max1+1,-1);
+        for(int i=0;i<clRet;i++)
+        {
+            if((sockfd==wait_event[i].data.fd)&&(EPOLLIN==wait_event[i].events&EPOLLIN) )
+            {
+				  struct sockaddr_in cli_addr;
+                  socklen_t length = sizeof(cli_addr);
+                  sockNumber[max1+1]=accept(sockfd,(struct sockaddr*)&cli_addr,&length);
+                  if(sockNumber[max1+1]>0)
+                  {
+                       event.data.fd = sockNumber[max1+1];
+                       event.events = EPOLLIN;
+                       int ret1 = epoll_ctl(crRet, EPOLL_CTL_ADD, sockNumber[max1+1], &event);
+                       max1++;
+                       if(-1==ret1)
+                       {
+                           perror("新连接的客户端注册失败");
+                       }
+                    printf("客户端%d上线\n",max1);
+
+				    //socklen_t len = sizeof(client);
+   					//接受连接
+   					connfd=accept(sockfd, (struct sockaddr *)&client, &length);
+
+   					task *ta=new task(connfd);
+   					//向线程池添加任务
+   					pool.append(ta);
+
+                  }
+             }
+            else if(wait_event[i].data.fd>3&&( EPOLLIN == wait_event[i].events & (EPOLLIN|EPOLLERR)))
+              {      memset(buf,0,sizeof(buf));
+                     int len=recv(wait_event[i].data.fd,buf,sizeof(buf),0);
+                     if(len<=0)
+                      {
+                            for(int j=1;j<=max1;j++)
+                             {
+                                  if(wait_event[i].data.fd==sockNumber[j])
+                                    {
+                                            clRet=epoll_ctl(crRet,EPOLL_CTL_DEL,wait_event[i].data.fd,wait_event+i);
+                                            printf("客户端%d下线\n",max1);
+                                            sockNumber[j] =sockNumber[max1] ;
+                                            close(sockNumber[max1]);
+                                            sockNumber[max1] =-1;
+                                            max1--;
+                                            usleep(50000);
+                                    }
+                             }
+                      }
+                   else
+                     {
+                      printf("%s\n",buf);
+                     }
+           }
+        }
+        delete[] wait_event;
+	}
+*/
+
+
+
+
+int main(int argc, char *argv[])
 {
-    if( argc <= 2 )
-    {
-        printf("usage: %s ip_address port_number\n",basename(argv[0]));
-        return 1;
-    }
-    const char* ip=argv[1];
-    int port=atoi(argv[2]);
+	if(argc != 2)
+	{
+		printf("usage : %s port\n", argv[0]);
+		return 1;
+	}
 
-    addsig(SIGPIPE, SIG_IGN); //忽视该信号
-    mythreadpool< myhttp_conn >* pool;
-    pool = new mythreadpool<myhttp_conn>;
-    /*pool=new mythreadpool < myhttp_conn >::mythreadpool;
-    /*mythreadpool< myhttp_conn >* pool=NULL;
-    pool = new mythreadpool<myhttp_conn>;*/
+	int sockfd, connfd;
+	struct sockaddr_in servaddr, client;
+	int port = atoi(argv[1]);
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_port = htons(port);
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    /*try
-    {
-        pool= new mythreadpool< >;
-    }
-    catch(...)
-    {
-        return 1;
-    }*/
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if(sockfd < 0)
+	{
+		cout<<"main sockfd"<<endl;
+		return 1;
+	}
 
-    myhttp_conn* users= new myhttp_conn[MAX_FD];
-    assert(users); //断言
-    //int user_count = 0;
+	int ret = bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+	if(ret < 0)
+	{
+		cout<<"main ret"<<endl;
+		return 1;
+	}
 
-    int listenfd=socket(PF_INET,SOCK_STREAM,0); //监听套接字
-    assert(listenfd>= 0);//断言
-    struct linger tmp={1,0};
-    setsockopt(listenfd,SOL_SOCKET,SO_LINGER,&tmp,sizeof(tmp));
+	ret = listen(sockfd, 10);
+	if(ret < 0)
+	{
+		cout<<"main listen"<<endl;
+		return 1;
+	}
+	//创建线程池
+	addsig(SIGPIPE, SIG_IGN); //忽视该信号
+	mythreadpool<task> pool(20);
+	pool.start();  //线程池开始运行
 
-    int ret = 0;
-    struct sockaddr_in address;
-    bzero(&address,sizeof(address));
-    address.sin_family=AF_INET;
-    inet_pton(AF_INET,ip,&address.sin_addr);
-    address.sin_port=htons(port);
+	while(1)
+	{
 
-    ret=bind(listenfd,(struct sockaddr*)&address,sizeof(address));
-    assert(ret>=0);
+		socklen_t len = sizeof(client);
 
-    ret=listen(listenfd,5);
-    assert(ret>=0);
+		connfd = accept(sockfd, (struct sockaddr *)&client, &len);
+		task *ta = new task(connfd);
 
-    epoll_event events[MAX_EVENT_NUMBER];
-    int epollfd=epoll_create(5);
-    assert(epollfd!=-1);
-    addfd(epollfd,listenfd,false);
-    myhttp_conn::my_epollfd=epollfd;
-
-    while(true)
-    {
-        int number=epoll_wait(epollfd,events,MAX_EVENT_NUMBER,-1);
-        if ( (number<0) && (errno!=EINTR) )
-        {
-            printf("epoll failure\n");
-            break;
-        }
-
-        for(int i=0;i<number;i++)
-        {
-            int sockfd=events[i].data.fd;
-            if(sockfd==listenfd)
-            {
-                struct sockaddr_in client_address;
-                socklen_t client_addrlength=sizeof(client_address);
-                int connfd=accept(listenfd,(struct sockaddr*)&client_address,&client_addrlength);
-                if(connfd<0)
-                {
-                    printf("errno is: %d\n",errno);
-                    continue;
-                }
-                if(myhttp_conn::my_usercount>=MAX_FD)
-                {
-                    show_error(connfd,"Internal server busy");
-                    continue;
-                }
-
-                users[connfd].init(connfd,client_address);
-            }
-            else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
-            {
-                users[sockfd].close_conn();
-            }
-            else if(events[i].events & EPOLLIN)
-            {
-                if(users[sockfd].read())
-                {
-                    pool->append(users+sockfd);
-                }
-                else
-                {
-                    users[sockfd].close_conn();
-                }
-            }
-            else if(events[i].events & EPOLLOUT)
-            {
-                if(!users[sockfd].write())
-                {
-                    users[sockfd].close_conn();
-                }
-            }
-            else
-            {}
-        }
-    }
-
-    close(epollfd);
-    close(listenfd);
-    delete [] users;
-    delete pool;
-    return 0;
+		pool.append(ta);
+	}
+	return 0;
 }

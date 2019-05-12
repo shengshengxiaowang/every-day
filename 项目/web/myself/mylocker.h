@@ -29,11 +29,11 @@ public:
     }
     bool wait()  //信号量值减１，等待信号量
     {
-        return (sem_post(&m_sem)==0);
+        return sem_wait(&m_sem)==0;
     }
     bool post()   //信号量值增１
     {
-        return (sem_post(&m_sem)==0);
+        return sem_post(&m_sem)==0;
     }
 };
 
@@ -55,12 +55,13 @@ public:
     }
     bool lock()    //给互斥锁加锁
     {
-        return (pthread_mutex_lock(&m_mutex)==0);
+        return pthread_mutex_lock(&m_mutex)==0;
     }
     bool unlock()   //解锁
     {
-        return (pthread_mutex_unlock(&m_mutex)==0);
+        return pthread_mutex_unlock(&m_mutex)==0;
     }
+
 };
 
 
@@ -78,6 +79,7 @@ public:
         }
         if(pthread_cond_init(&m_cond,NULL)!=0)
         {
+            pthread_mutex_destroy(&m_mutex);
             throw std::exception();
         }
     }
@@ -98,6 +100,14 @@ public:
     {
         return pthread_cond_signal(&m_cond)==0;
     }
+
+    bool broadcast() //唤醒all等待条件变量的线程
+    {
+            return pthread_cond_broadcast(&m_cond) == 0;
+    }
+
+
+
 };
 
 #endif

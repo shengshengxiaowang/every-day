@@ -10,7 +10,7 @@ const char* error_404_form="The requested file was not found on this server.\n";
 const char* error_500_title="Internal Error\n"; //内部错误
 const char* error_500_form="There was an unusual problem serving the requested file.\n";//为请求的文件提供服务时出现异常问题
 
-const char* doc_root="/var/www/html"; //网站根目录
+const char* doc_root="/home/sheng/Desktop/aaa";//网站根目录
 
 int setnonblocking(int fd)  //设置非阻塞
 {
@@ -48,8 +48,8 @@ void modfd(int epollfd,int fd,int ev)//修改事件表中的事件属性
 }
 
 
-int myhttp_conn::my_epollfd = -1; //epoll事件表
-int myhttp_conn::my_usercount = 0; //用户数量
+int myhttp_conn::my_epollfd=-1; //epoll事件表
+int myhttp_conn::my_usercount=0; //用户数量
 
 void myhttp_conn::close_conn(bool real_close)//关闭连接
 {
@@ -65,9 +65,9 @@ void myhttp_conn::init(int sockfd,const sockaddr_in & addr) //初始化新的连
 {
     my_sockfd=sockfd;
     my_address=addr;
-    int error=0;
-    socklen_t len=sizeof(error);
-    getsockopt(my_sockfd,SOL_SOCKET,SO_ERROR,&error,&len); //获取套接口
+    //int error=0;
+    //socklen_t len=sizeof(error);
+    //getsockopt(my_sockfd,SOL_SOCKET,SO_ERROR,&error,&len); //获取套接口
     int reuse=1;
     setsockopt(my_sockfd,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));//设置套接口
     addfd( my_epollfd,sockfd,true); //添加进事件表
@@ -191,7 +191,7 @@ myhttp_conn::HTTP_CODE myhttp_conn::parse_request_line( char* text )
         return BAD_REQUEST;
     }
 
-    if(strncasecmp(my_url,"http://",7)==0)
+    /*if(strncasecmp(my_url,"http://",7)==0)
     {
         my_url+=7;
         my_url=strchr(my_url,'/');
@@ -200,7 +200,7 @@ myhttp_conn::HTTP_CODE myhttp_conn::parse_request_line( char* text )
     if(!my_url || my_url[0]!='/')
     {
         return BAD_REQUEST;
-    }
+    }*/
 
     my_checkstate=CHECK_STATE_HEADER; //检查状态
     return NO_REQUEST;
@@ -210,10 +210,10 @@ myhttp_conn::HTTP_CODE myhttp_conn::parse_headers(char* text)
 {
     if(text[0]=='\0')
     {
-        if(my_method==HEAD)
+        /*if(my_method==HEAD)
         {
             return GET_REQUEST;
-        }
+        }*/
 
         if(my_contentlength!=0)
         {
@@ -430,7 +430,7 @@ bool myhttp_conn::add_headers(int content_len)
     add_content_length(content_len);
     add_linger();
     add_blank_line();
-/* */    return  0;
+/* */ //   return  0;
 }
 
 bool myhttp_conn::add_content_length(int content_len)
@@ -455,12 +455,14 @@ bool myhttp_conn::add_content(const char* content)
 
 bool myhttp_conn::process_write(HTTP_CODE ret)
 {
+    std::cout << "hello write!!" << std::endl;
+    std::cout << "ret = " << ret << std::endl;
     switch(ret)
     {
         case INTERNAL_ERROR:
         {
             add_status_line(500,error_500_title);
-            add_headers(strlen(error_500_form));
+            add_headers( strlen(error_500_form));
             if(!add_content(error_500_form))
             {
                 return false;
@@ -470,7 +472,7 @@ bool myhttp_conn::process_write(HTTP_CODE ret)
         case BAD_REQUEST:
         {
             add_status_line(400,error_400_title);
-            add_headers(strlen(error_400_form));
+            add_headers( strlen(error_400_form));
             if(!add_content(error_400_form))
             {
                 return false;
@@ -480,8 +482,8 @@ bool myhttp_conn::process_write(HTTP_CODE ret)
         case NO_RESOURCE:
         {
             add_status_line(404,error_404_title);
-            add_headers(strlen(error_404_form));
-            if(!add_content(error_404_form))
+            add_headers( strlen(error_404_form));
+            if(! add_content(error_404_form))
             {
                 return false;
             }
@@ -490,7 +492,7 @@ bool myhttp_conn::process_write(HTTP_CODE ret)
         case FORBIDDEN_REQUEST:
         {
             add_status_line(403,error_403_title);
-            add_headers(strlen(error_403_form));
+            add_headers( strlen(error_403_form));
             if(!add_content(error_403_form))
             {
                 return false;
@@ -513,7 +515,7 @@ bool myhttp_conn::process_write(HTTP_CODE ret)
             else
             {
                 const char* ok_string="<html><body></body></html>";
-                add_headers(strlen(ok_string));
+                add_headers( strlen(ok_string));
                 if(!add_content(ok_string))
                 {
                     return false;
