@@ -1,35 +1,56 @@
-//会场安排问题
+//会场安排问题 贪心算法
 #include<iostream>
 #include<algorithm>
 using namespace std;
 
+struct aa
+{
+  int start,end,flag;
+};
 int main()
 {
+
     int n;
     cin>>n;
-    int start[n],end[n],flag[n];
-    int i,count=n,m=1,k;
+    struct aa a[n];
+    int i,j,count=n,m=0,k;
     for(i=0;i<n;i++)
     {
-        cin>>start[i];
-        cin>>end[i];
-        flag[i]=0;
+        cin>>a[i].start;
+        cin>>a[i].end;
+        a[i].flag=0;
     }
-    flag[0]=1;
-    k=end[0];
-    sort(start,start+n);
-    sort(end,end+n);
-    while(count>0)
+    struct aa t;//排序
+    for(i=0;i<n;i++)
     {
-        for(i=1;i<n;i++)
+        for(j=0;j<n-i-1;j++)
         {
-            if(flag[i]==0 &&start[i]>k)//如果没有被安排并且满足条件，count数减1
+            if(a[i].end>a[i+1].end)
             {
-                count--;
-                k=start[i];
+                t=a[i];
+                a[i]=a[i+1];
+                a[i+1]=t;
             }
         }
-        k=0;
+    }
+
+    /*for(i=0;i<n;i++)
+    {
+      cout<<a[i].start<<' '<<a[i].end<<endl;
+    }*/
+    k=-1;
+    while(count>0)
+    {
+        for(i=0;i<n;i++)
+        {
+            if(a[i].flag==0 && a[i].start>k)//如果没有被安排并且满足条件，count数减1
+            {
+                count--;
+                a[i].flag=1;
+                k=a[i].end;
+            }
+        }
+        k=-1;
         m++;
     }
     cout<<m<<endl;
