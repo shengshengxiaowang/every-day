@@ -35,23 +35,19 @@ void sfun(int a,int b,int *c)   //递归求解
 
 void ssfun(int *num,int s)  //该方法只适合有序数组，若无序必须先进行排序；或者再增加数组用以记录每个数字出现次数，再进行比较
 {
-    int i,max=0,k=0,count=0,x;
+    int i,max=0,k=0,count=1,x=num[0];
     //vector<int> num(c,c+s);
     for(i=0;i<s;i++)
-    {
-        if(count==0)
-        {
-            x=num[i];
-            ++count;
-        }
-        else if(x!=num[i])
+    { 
+        if(x!=num[i])
         {
             if(count>max)
             {
                 k=num[i-1];
                 max=count;
             }
-            count=0;
+            count=1;
+            x=num[i];
         }
         else
         {
@@ -71,5 +67,5 @@ int main()
     }
     //sfun(0,s,a);
     ssfun(a,s);
-    cout<<m<<" " <<v<<endl;
+    //cout<<m<<" " <<v<<endl;
 }
