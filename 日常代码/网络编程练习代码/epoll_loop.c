@@ -1,5 +1,5 @@
 /*
- * epoll基于非阻塞I/O事件驱动
+ * epoll基于非阻塞I/O事件驱动,练习
  */
 #include <stdio.h>
 #include <sys/socket.h>
