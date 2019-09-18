@@ -8,8 +8,9 @@ int main(void)
     for(i=0;i<2;i++)
     {
         fork();
-        printf("-\n");
-        //printf("-");
+        printf("-");
+        //printf("-\n");
+        
     }
     wait(NULL);
     wait(NULL);
