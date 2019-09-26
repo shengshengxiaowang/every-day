@@ -22,10 +22,12 @@ int main(int argc,char* argv[])
     }
     for(i=0;i<child_proc_number;i++)
     {
-        child_pid=fork();
+        //if(getpid())
+        child_pid=fork();  //子进程返回0，父进程返回子进程id
         if(child_pid==0)  //如果是子进程
         {
             proc_number=i;
+            //printf("%d\n",i);
             do_something();//输出信息
         }
         else  //如果是父进程
@@ -44,12 +46,7 @@ int main(int argc,char* argv[])
         }
     }
     
-    for(i=0;i<child_proc_number;i++)
-    {
-        kill(pid[i],SIGTERM); //杀死进程
-    }
-
-    kill(0,SIGTERM);
+    kill(0,SIGTERM);  //杀死父进程，即杀死所有进程
     return 0;
     
 }
@@ -62,3 +59,16 @@ void do_something()
         sleep(SLEEP_INTERVAL); //主动阻塞2秒
     }
 }
+
+/*
+1.我开始认为最终运行结果会创建child_proc_number(最多10)个进程
+然后用户输入相对应的进程id,就可以杀死进程，输入q杀死所有进程退出程序。
+2.实际结果跟我认为的差不多，但是用户只需要输入要杀死的第几个进程号就行。
+特点就是进程会不断的显示信息，大概2秒重复一下，应该是父进程创建子进程，子进程跟父进程继续创建，然后都卡在了函数中的sleep中
+3.不相同，因为proc_number是循环中的i值，而i在不同进程中是不一样的
+4.使用了（用户杀死进程的个数加1）次，最后一次作用是杀死父进程，其余的作用都是杀死相对应的子进程。
+执行后现象便是该进程结束，最后一次执行后现象为程序结束退出。
+5.调用结束进程的函数，如exit()等。调用函数方法比较好，从外部杀死可能会中断正在执行的程序。
+6.好的。
+
+*/
