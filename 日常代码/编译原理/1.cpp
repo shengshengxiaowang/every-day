@@ -2,7 +2,6 @@
 #include<fstream>
 using namespace std;
 
-
 int main(int argc,char *argv[])
 {
     if(argc<2)     //判断输入文件
@@ -14,20 +13,17 @@ int main(int argc,char *argv[])
     {
         cout<<argv[1]<<endl;
     }
-    ifstream file(argv[1],ios::in);
-    if(!file)
+    FILE *myfile;
+
+    if( (myfile=fopen(argv[1],"r"))==NULL)
     {
         cerr<<"文件错误"<<endl;
         exit(1);
     }
     else
     {
-        char c=file.get();
-        cout<<c<<endl;
-        c=file.get();
-        cout<<c<<endl;
-        //cout<<file.get()<<endl;
+        cout<<fgetc(myfile)<<endl;
     }
-    
-    file.close();
+    fclose(myfile);
+    return 0;
 }
