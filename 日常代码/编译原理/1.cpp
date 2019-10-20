@@ -391,3 +391,5 @@ void type_letter() //打印字母表
         cout << iter->first << "  "<<iter->second << endl;
     }
 }
+
+//只实现了简单的功能，出错报行啊之类的还没有
