@@ -13,8 +13,6 @@ void* thread_worker(void *p)
 {
     int thread_num;
     thread_num=(int)p;  //强转 让thread_num=i  c++语法不支持
-    //thread_num = *((int *)p);
-    printf("i: %d \n",thread_num);
     for(;;)   //无限循环
     {
         counter[thread_num]++;
@@ -26,18 +24,12 @@ int main(int argc,char* argv[])
 {
     int i,rth,ch;
     pthread_t pthread_id[MAX_THREAD]={0}; //存放线程id
-    for(int i=0;i<3;i++)
-    {
-        printf("i: %d   %d\n",&(*((int *)i)),i);
-    }
     for(i=0;i<MAX_THREAD;i++)
     {
         //用pthread_create创建3个普通线程，线程id存入数组
         //线程执行函数是thread_worker,将i作为参数传入
-        
-
-        rth=pthread_create(&pthread_id[i] ,NULL,thread_worker,&i); //question问题，如果传进去的是&i，则会出现线程为0的情况
-        //需要使用i,而不是地址，穿进去如果是&i,则自动变为void *,这样直接要强转成它指向的
+        rth=pthread_create(&pthread_id[i] ,NULL,thread_worker,(void*)i); //question问题，如果传进去的是&i，则会出现线程为0的情况
+        //应该传入1的值，而不是i的地址
         //第一个线程为指向线程标识符的指针，第二个设置线程属性，第三个为线程函数，第四个为函数参数
     }
     do  //用户按一次回车执行循环一次,q退出
