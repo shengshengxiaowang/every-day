@@ -32,14 +32,14 @@ struct allocated_block *allocked_block_head=NULL;//分配内存块首地址
 int free_block_count=0; //空闲块的个数初始为0
 int mem_size=default_mem_size; //内存大小
 int free_mem_size=0;   //当前空闲内存大小
-int algorithm=ma_ff;   //当前分配算法；
+int algorithm=ma_ff;   //当前分配算法，默认ff
 static int pid=0;
 int flag=0;     //标志内存是否已经被设置，如果设置过，则不能再设置
 
 struct free_block* init_free_block(int mem_size);//初始化空闲内存块头指针
 void menu();//显示菜单
 int set_mem_size(); //设置内存大小
-
+void set_algorithm();//设置分配算法
 int set_mem_size() //设置内存大小,默认为之前设定的值为1024
 {
     int size;
@@ -91,6 +91,14 @@ struct free_block* init_free_block(int mem_size)
     fb->next=NULL;//链表下一个指向0
 
     return fb;
+}
+
+void set_algorithm()
+{
+    int a;
+    printf("1.ff算法\n2.bf算法\n3.wf算法\n请选择：\n");
+    scanf("%d",&a);
+    getchar();  //吸收多的回车符号
 }
 int main()
 {
