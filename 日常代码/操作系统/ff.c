@@ -15,17 +15,19 @@ struct free_block  //空闲块数据结构
     int size;       //空闲块大小
     int start_addr; //空闲块起始位置
     struct free_block *next;  //指向下一个空闲块
+    struct free_block *prior;  //指向前一个空闲块
 };
 struct free_block *free_block_head=NULL; //空闲块链表的首地址
+struct free_block *free_block_end=NULL;   //空闲块链表的尾地址
 
-struct allocated_block
+struct allocated_block   //已分配的数据结构
 {
     int pid;       //进程id
     int size;      //进程大小
     int start_addr; //进程分配到的内存块的起始地址
     char process_name[process_name_len]; //进程名
     struct allocated_block *next;  //下一个指针
-    //struct allocated_block *prior; //上一个指针
+    struct allocated_block *prior; //上一个指针
 };
 struct allocated_block *allocked_block_head=NULL;//分配内存块首地址
 
@@ -40,6 +42,11 @@ struct free_block* init_free_block(int mem_size);//初始化空闲内存块头�
 void menu();//显示菜单
 int set_mem_size(); //设置内存大小
 void set_algorithm();//设置分配算法
+void rearrange(int a);  //算法跳转函数，跳转到对应算法的函数中去
+int rearrange_ff(); //ff算法函数
+
+
+
 int set_mem_size() //设置内存大小,默认为之前设定的值为1024
 {
     int size;
@@ -65,7 +72,7 @@ int set_mem_size() //设置内存大小,默认为之前设定的值为1024
     }
 }
 
-void menu()
+void menu()   //菜单函数
 {
     printf("1-设置内存大小(初始值为%d)\n",default_mem_size);
     printf("2-选择内存分配算法\n");
@@ -93,21 +100,72 @@ struct free_block* init_free_block(int mem_size)
     return fb;
 }
 
+int rearrange_ff()  //ff算法函数
+{
+    struct free_block *head=free_block_head; //指向空闲链表头指针
+    struct free_block *forehand=NULL,*pre=NULL,*rear=NULL;
+    int i;
+    if(head==NULL)
+    {
+        return -1;
+    }
+    for(i=0;i<free_block_count-1;i++)
+    {
+        forehand=head;  //从头结点开始
+        pre=forehand->next; //指向头结点的下一个
+        rear=pre->next;  //指向头结点的下下一个
+        while(pre->next!=NULL)
+        {
+            //比较第一个跟第二个空闲块的开始位置大小
+            if(forehand==head&& forehand->start_addr>=pre->start_addr)
+            {
+                head->next=pre->next;                                                                                                                                                                                                                                                   
+            }
+        }
+
+
+    }
+}
+
+
+void rearrange(int a)  //算法跳转函数，跳转到对应算法的函数中去
+{
+    switch(a)
+    {
+        case ma_ff:  //define中用1表示ff算法
+            rearrange_ff();
+            break;
+       // case ma_bf:  //
+
+
+    }
+}
+
 void set_algorithm()
 {
     int a;
     printf("1.ff算法\n2.bf算法\n3.wf算法\n请选择：\n");
     scanf("%d",&a);
     getchar();  //吸收多的回车符号
+    if(a<=3&& a>=1)
+    {
+        printf("设置成功\n");
+        algorithm=a;
+        rearrange(a);
+    }
+    else
+    {
+        printf("错误，返回上一层\n");
+    }
+    return;
+    
 }
 int main()
 {
     free_block_head=init_free_block(mem_size); //初始化空闲块的头指针，mem_size为之前设定的大小，函数返回值为头结点
     char choice;   
     pid =0;
-    while(1)
-    {
-        menu();
+    while(1)        menu();
         choice=getchar();
         getchar();
         switch(choice)
