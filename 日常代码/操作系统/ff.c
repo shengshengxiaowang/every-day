@@ -709,7 +709,7 @@ int display_mem_usage(){
 	}
 }
  
-	/*按指定的算法整理内存空闲块链表*/
+按指定的算法整理内存空闲块链表*
 int rearrange(int algorithm){
     switch(algorithm){
         case MA_FF:  rearrange_FF(); break;
