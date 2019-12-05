@@ -51,7 +51,7 @@ class Solution
 public:
     vector<int> twoSum(vector<int>& nums, int target) 
     {
-        map<int,size_t> mapp;
+        map<int,size_t> mapp;  
         int i=0;
         for(auto c:nums)
         {

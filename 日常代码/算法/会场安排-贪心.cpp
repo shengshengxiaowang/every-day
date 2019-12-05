@@ -7,6 +7,11 @@ struct aa
 {
   int start,end,flag;
 };
+
+int cmp(aa first,aa second)
+{
+    return first.end<second.end;
+}
 int main()
 {
 
@@ -20,19 +25,7 @@ int main()
         cin>>a[i].end;
         a[i].flag=0;
     }
-    struct aa t;//排序
-    for(i=0;i<n;i++)
-    {
-        for(j=0;j<n-i-1;j++)
-        {
-            if(a[i].end>a[i+1].end)
-            {
-                t=a[i];
-                a[i]=a[i+1];
-                a[i+1]=t;
-            }
-        }
-    }
+    sort(a,a+n,cmp);
 
     /*for(i=0;i<n;i++)
     {

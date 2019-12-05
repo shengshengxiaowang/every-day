@@ -3,3 +3,7 @@
 namespace x1
 {
 }
+int main
+{
+    
+}
