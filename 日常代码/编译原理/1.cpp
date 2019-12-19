@@ -19,7 +19,7 @@ void type_key();    //打印关键字表
 void type_digit();  //打印数字表
 void type_letter(); //打印字母表
 
-void fun(FILE *myfile)
+void fun(FILE *myfile)//遍历
 {
     char ch;  //字符
     int len=0;  //文件当前长度
